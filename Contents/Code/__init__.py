@@ -70,7 +70,7 @@ class ADEAgent(Agent.Movies):
         special_id = None
 
         # Check for special ID and strip it from the title if present
-        match = re.search(r'\{ade-(\d{7})\}', title)
+        match = re.search(r'\{ade-(\d+)\}', title)  # Adjusted to match one or more digits
         if match:
             special_id = match.group(1)
             title = re.sub(r'\s*\{ade-\d{7}\}\s*', '', title).strip()
