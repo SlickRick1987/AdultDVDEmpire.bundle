@@ -73,7 +73,8 @@ class ADEAgent(Agent.Movies):
         match = re.search(r'\{ade-(\d+)\}', title)  # Adjusted to match one or more digits
         if match:
             special_id = match.group(1)
-            title = re.sub(r'\s*\{ade-\d{7}\}\s*', '', title).strip()
+            title = re.sub(r'\{ade-\d+\}', '', title).strip()
+            LogDebug('Special ADE ID found: {}'.format(special_id))
 
         # Adjust title if it starts with 'The'
         if title.lower().startswith('the '):
@@ -91,30 +92,62 @@ class ADEAgent(Agent.Movies):
             LogDebug('Search page successfully retrieved.')
             movies = search_page.xpath('//div[contains(@class,"row list-view-item")]')
             LogDebug('Found {} movies on the search page.'.format(len(movies)))
+            if not movies:
+                LogDebug('No movies found on the search page.')
+                return
 
             for movie in movies:
-                movie_title = movie.xpath('.//a[contains(@label,"Title")]')[0].text_content().strip()
+                title_element = movie.xpath('.//a[contains(@label,"Title")]')
+                if title_element:
+                    movie_title = title_element[0].text_content().strip()
+                else: 
+                    LogDebug('Movie title element not found')
+                    continue  # Skip to the next movie if the title element is missing
+
+                LogDebug('Processing movie: ' + movie_title)
+
                 # Adjust title format if it ends with ', The'
                 if movie_title.endswith(', The'):
                     movie_title = 'The ' + movie_title[:-5]
+                    LogDebug('Adjusted movie title: ' + movie_title)
                 
-                movie_id = movie.xpath('.//a[contains(@label,"Title")]/@href')[0].split('/', 2)[1]
+                href_element = title_element[0].get('href')
+                if href_element:
+                    movie_id = href_element.split('/', 2)[1]
+                    LogDebug('Movie ID: ' + movie_id)
+                else:
+                    LogDebug('No href found for movie: ' + movie_title)
+                    continue
+
                 dvd_elements = movie.xpath('.//a[@title="DVD" or @title="dvd"]')
                 movie_format = 'DVD' if dvd_elements else 'VOD'
+                LogDebug('Movie format: ' + movie_format)
                 
                 # Extract year
                 year_element = movie.xpath('.//small[contains(text(),"released")]/following-sibling::text()')
-                cur_year = re.search(r'\d{2}/\d{2}/(\d{4})', year_element[0].strip() if year_element else '').group(1) if year_element else None
-                
-                # Adjust score based on special ID
-                if special_id and movie_id == special_id:
-                    score = 100
+                cur_year = 9999  # Default year if not found
+                if year_element:
+                    year_element_text = year_element[0].strip()
+                    year_match = re.search(r'\d{2}/\d{2}/(\d{4})', year_element_text)
+                    if year_match:
+                        cur_year = int(year_match.group(1))
+                        LogDebug('Movie year found: ' + str(cur_year))
+                    else:
+                        LogDebug('No year match found for text: ' + year_element_text)
                 else:
-                    score = INITIAL_SCORE - Util.LevenshteinDistance(title.lower(), movie_title.lower())
+                    LogDebug('Year element not found for movie: ' + movie_title)                
 
-                if (movie_title, cur_year) not in movie_dict:
-                    movie_dict[(movie_title, cur_year)] = []
-                movie_dict[(movie_title, cur_year)].append((movie_id, movie_format, score))
+                score = INITIAL_SCORE - Util.LevenshteinDistance(title.lower(), movie_title.lower())
+                if special_id and movie_id == special_id:
+                    movie_dict.clear()  # Clearing all previous entries if special ID matches
+                    movie_dict[(movie_title, cur_year)] = [(movie_id, movie_format, 100)]
+                    break  # Stop further processing as we found the match
+                else:
+                    if (movie_title, cur_year) not in movie_dict:
+                        movie_dict[(movie_title, cur_year)] = []
+                    movie_dict[(movie_title, cur_year)].append((movie_id, movie_format, score))
+
+                LogDebug('Score for movie: ' + movie_title + ' is ' + str(score))
 
             # Process scoring adjustments for DVD and VOD entries
             for key, entries in movie_dict.items():
