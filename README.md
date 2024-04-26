@@ -51,6 +51,9 @@ Troubleshooting
         Check the Plex logs for any specific errors returned by the agent.
     Plugin not loading:
         Confirm the plugin is placed in the correct directory and that Plex Media Server was restarted after installation.
+    Weird Title Names:
+        The Agent pulls from local media, so if the file has metadata in the Title, the Agent will use that Title instead
+        of the file name.  Correct or delete the local metadata for proper matching.
 
 Logging
 
