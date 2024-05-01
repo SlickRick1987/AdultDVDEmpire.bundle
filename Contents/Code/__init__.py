@@ -59,7 +59,9 @@ class ADEAgent(Agent.Movies):
     accepts_from = ['com.plexapp.agents.localmedia']
 
     def search(self, results, media, lang):
-        title = media.title
+        # Determine if there's a manual search term provided by the user
+        title = media.name if media.name else media.title
+        LogDebug('Received search query: %s' % title)
 
         # Check if title has {tmdb-} or {imdb-} tags and return immediately if found
         # Assume if {tmdb-} or {imdb-} tags are present, user wants to use another Plex Agent to manually match.
