@@ -59,24 +59,38 @@ class ADEAgent(Agent.Movies):
     accepts_from = ['com.plexapp.agents.localmedia']
 
     def search(self, results, media, lang):
+        # Log both possible titles to see what is being received
+        LogDebug('Received search query (media.name): %s' % media.name)
+        LogDebug('Received search query (media.title): %s' % media.title)
+        LogDebug('Received filename: %s' % media.filename)
+
         # Determine if there's a manual search term provided by the user
+        filename = urllib2.unquote(media.filename)
+        LogDebug('Decoded filename: %s' % filename)
         title = media.name if media.name else media.title
         LogDebug('Received search query: %s' % title)
 
+        # Regular expression patterns for identifying special tags
+        tmdb_pattern = r'\{tmdb-\d+\}'
+        imdb_pattern = r'\{imdb-tt\d+\}'
+        ade_pattern = r'\{ade-(\d+)\}'
+
         # Check if title has {tmdb-} or {imdb-} tags and return immediately if found
-        # Assume if {tmdb-} or {imdb-} tags are present, user wants to use another Plex Agent to manually match.
-        if re.search(r'\{tmdb-\d+\}', title) or re.search(r'\{imdb-tt\d+\}', title):
+        if re.search(tmdb_pattern, filename) or re.search(imdb_pattern, filename):
             LogDebug('Title contains TMDB or IMDB tag, skipping search.')
             return
 
+
+        # Extract and handle special ADE ID
         special_id = None
 
         # Check for special ID and strip it from the title if present
-        match = re.search(r'\{ade-(\d+)\}', title)  # Adjusted to match one or more digits
+        match = re.search(ade_pattern, filename)
         if match:
             special_id = match.group(1)
-            title = re.sub(r'\{ade-\d+\}', '', title).strip()
-            LogDebug('Special ADE ID found: {}'.format(special_id))
+            title = re.sub(ade_pattern, '', title).strip()
+            LogDebug('Special ADE ID found and processed: %s' % special_id)
+
 
         # Adjust title if it starts with 'The'
         if title.lower().startswith('the '):
