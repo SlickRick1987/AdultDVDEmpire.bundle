@@ -18,7 +18,7 @@ Before deploying the agent, make sure to adjust the Preferences within Plex to f
 
 Usage
 
-The agent automatically triggers searches and updates metadata when movies are added to your Plex library. However, the behavior can be adjusted by adding specific tags to movie titles:
+The agent automatically triggers searches and updates metadata when movies are added to your Plex library. The agent expects movies to be named in proper Plex movie format i.e. Title (Year).ext.  The agent behavior can be adjusted by adding specific tags to movie titles:
 
     {ade-1234567}: Directly queries Adult DVD Empire using a specific ID provided in the tag.
     {tmdb-123456} and {imdb-tt1234567}: These tags prevent the agent from performing any searches or updates, allowing manual matching or deferment to other agents specifically designed for TMDB or IMDB, respectively. This is useful for titles where more accurate or specific metadata is needed that the primary agent may not handle well.
@@ -49,11 +49,9 @@ Troubleshooting
     Metadata not fetching:
         Ensure movie titles are named correctly.
         Check the Plex logs for any specific errors returned by the agent.
+        There is extensive logging, so turn on the debugger and have a look at the logs.
     Plugin not loading:
         Confirm the plugin is placed in the correct directory and that Plex Media Server was restarted after installation.
-    Weird Title Names:
-        The Agent pulls from local media, so if the file has metadata in the Title, the Agent will use that Title instead
-        of the file name.  Correct or delete the local metadata for proper matching.
 
 Logging
 
@@ -63,7 +61,7 @@ Logging
 
 Contributions
 
-Contributions to improve the agent or address bugs are welcome via GitHub pull requests.
+Contributions to improve the agent or address bugs are welcome via GitHub pull requests.  The discussion board is active and you can notify if things are not working.
 
 Thank You
 
