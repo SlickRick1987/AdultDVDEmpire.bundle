@@ -221,14 +221,33 @@ class ADEAgent(Agent.Movies):
                             LogDebug('Adjusted VOD score for {0}: {1}'.format(key[0], score // 2))
 
 
-            # Append results to Plex
+            # Append results to Plex based on GOOD_SCORE threshold
+            good_results_exist = False
+
+            # First pass to check if any good results exist
+            for key, movie_info in movie_dict.items():
+                for id, format, score in movie_info:
+                    if score >= GOOD_SCORE:       
+                        good_results_exist = True
+                        break
+                if good_results_exist:
+                     break            
+
+            # Second pass to append results based on the existence of good results
             for key, movie_info in movie_dict.items():
                 for id, format, score in movie_info:
                     title_with_year = "{} ({})".format(key[0], key[1]) if key[1] else key[0]  # Append year if available
-                    results.Append(MetadataSearchResult(id=id, name=title_with_year, score=score, lang=lang))
+                    # Check if any good results exist, append only those; else append all
+                    if good_results_exist:
+                        if score >= GOOD_SCORE:
+                            results.Append(MetadataSearchResult(id=id, name=title_with_year, score=score, lang=lang))
+                    else:
+                        results.Append(MetadataSearchResult(id=id, name=title_with_year, score=score, lang=lang))
 
+            
             results.Sort('score', descending=True)
-            LogDebug('Results sorted by score.')
+            LogDebug('Results processed and appended based on score threshold.')
+
         except urllib2.HTTPError as e:
             LogDebug('HTTP Error: {0} - {1}'.format(e.code, search_url))
         except urllib2.URLError as e:
@@ -284,6 +303,18 @@ class ADEAgent(Agent.Movies):
 
             # Update genres
             self.update_genres(metadata, info_page)
+
+            # Pulling screenshots if enabled
+            if Prefs['pullscreens']:
+                self.retrieve_screenshots(metadata, info_page)
+
+            # Pulling gallery images if available and enabled
+            if Prefs['pullgallery']:
+                self.retrieve_gallery_images(metadata, info_url)
+
+            # Update collections
+            if Prefs['studioascollection'] and metadata.studio:
+                self.update_collections(metadata, info_page, metadata.studio)
 
             # Additional metadata fields can be updated here...
             
@@ -465,3 +496,53 @@ class ADEAgent(Agent.Movies):
                 LogDebug('No rating found.')
         except Exception as e:
             LogDebug('Exception while updating rating: {0}'.format(str(e)))
+
+    def retrieve_screenshots(self, metadata, info_page):
+        try:
+            imgs = info_page.xpath('//a[contains(@rel, "scenescreenshots")]')
+            pullscreenscount = int(Prefs['pullscreenscount'])
+            if imgs and pullscreenscount > 0:
+                selected_imgs = random.sample(imgs, min(pullscreenscount, len(imgs)))
+                for img in selected_imgs:
+                    thumb_url = img.attrib['href']
+                    thumb = HTTP.Request(thumb_url)
+                    metadata.art[thumb_url] = Proxy.Media(thumb)
+                    LogDebug('Added screenshot: {0}'.format(thumb_url))
+        except Exception as e:
+            LogDebug('Exception while retrieving screenshots: {0}'.format(str(e)))
+
+    def retrieve_gallery_images(self, metadata, base_url):
+        try:
+            gallery = HTML.ElementFromURL(base_url + '/gallery')
+            imgs = gallery.xpath('//div/a[contains(@class, "thumb fancy")]')
+            pullgallerycount = int(Prefs['pullgallerycount'])
+            if imgs and pullgallerycount > 0:
+                selected_imgs = random.sample(imgs, min(pullgallerycount, len(imgs)))
+                for img in selected_imgs:
+                    image_url = img.attrib['href']
+                    image = HTTP.Request(image_url)
+                    metadata.art[image_url] = Proxy.Media(image)
+                    LogDebug('Added gallery image: {0}'.format(image_url))
+        except Exception as e:
+            LogDebug('Exception while retrieving gallery images: {0}'.format(str(e)))
+
+    def update_collections(self, metadata, html, studio):
+        try:
+            metadata.collections.clear()  # Clears existing collections to avoid duplicates
+
+            # Handle Series as Collection
+            series_links = html.xpath('//a[contains(@label, "Series")]')
+            if series_links:
+                series = HTML.StringFromElement(series_links[0])  # Assuming the first link is the correct one
+                series_name = HTML.ElementFromString(series).text_content().strip()
+                series_name = series_name.split('"')[1]  # Parsing might vary based on actual HTML structure
+                metadata.collections.add(series_name)
+                LogDebug('Added Series to collections: {0}'.format(series_name))
+
+            # Handle Studio as Collection based on Preference
+            if Prefs['studioascollection'] and studio:
+                metadata.collections.add(studio)
+                LogDebug('Added Studio to collections as per user preference: {0}'.format(studio))
+
+        except Exception as e:
+            LogDebug('Exception while updating collections: {0}'.format(str(e)))
