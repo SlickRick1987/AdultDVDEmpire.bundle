@@ -60,10 +60,14 @@ class ADEAgent(Agent.Movies):
     accepts_from = ['com.plexapp.agents.localmedia']
 
     def search(self, results, media, lang):
-        # Log both possible titles to see what is being received
+        # Initial Logging to understand what's received
         LogDebug('Received search query (media.name): {0}'.format(media.name))
         LogDebug('Received search query (media.title): {0}'.format(media.title))
         LogDebug('Received filename: {0}'.format(media.filename))
+
+        # Decoding the filename to work with it
+        decoded_filename = urllib2.unquote(media.filename)  # Ensure this is done before any usage
+        LogDebug('Decoded filename: {0}'.format(decoded_filename))
 
         # Check if this might be a manual search by comparing media.name and media.title
         if media.name and media.name != media.title:
@@ -71,12 +75,9 @@ class ADEAgent(Agent.Movies):
             search_query = media.name
             LogDebug('Manual search detected, using media.name: {0}' .format(search_query))
         else:
-            # Automatic scan or no change in media.name, try parsing filename
-            # URL-decode the filename to work with clear text
-            decoded_filename = urllib2.unquote(media.filename)
-            LogDebug('Decoded filename: {0}' .format(decoded_filename))
-            filename = urllib2.unquote(media.filename)
-            LogDebug('Decoded filename: {0}'.format(decoded_filename))
+            # Automatic or no specific search handling
+            # Proceed with operations on decoded_filename or handle other scenarios
+            pass
 
         # Consolidated Regex for special tags and title/year extraction
         special_tag_pattern = r'{(tmdb-\d+|imdb-tt\d+|ade-(\d+))}'
