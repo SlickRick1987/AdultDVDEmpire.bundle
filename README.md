@@ -22,18 +22,13 @@ The agent automatically triggers searches and updates metadata when movies are a
 library. The agent expects movies to be named in proper Plex movie format i.e. Title (Year).ext.  
 The agent behavior can be adjusted by adding specific tags to movie titles:
 
-{ade-1234567}: Directly queries Adult DVD Empire using a specific ID provided in the tag.
-{tmdb-123456} and {imdb-tt1234567}: These tags prevent the agent from performing any searches 
-or updates, allowing manual matching or deferment to other agents specifically designed for TMDB 
-or IMDB, respectively. This is useful for titles where more accurate or specific metadata is needed 
-that the primary agent may not handle well.
+    {ade-1234567}: Directly queries Adult DVD Empire using a specific ID provided in the tag.
+    
+    {tmdb-123456} and {imdb-tt1234567}: These tags prevent the agent from performing any searches 
+    or updates, allowing manual matching or deferment to other agents specifically designed for TMDB 
+    or IMDB, respectively. This is useful for titles where more accurate or specific metadata is needed 
+    that the primary agent may not handle well.
 
-Examples of proper naming for the agent is in the Plex style, Title (Year).  
-If using these triggers:
-Title (Year) {tag}
-The Cat's Meow (2010) {ade-1528431}
-Batman VS Superman (2023) {tmdb-1203062}
-Spider-Man XXX 2: An Axel Braun Parody (2014) {imdb-tt3798010}
 
 Installation
 
@@ -50,13 +45,24 @@ This ensures stability and compatibility across different server setups.
 
 Example
 
-To activate specific functionalities, rename your movie file or directory like so:
+To activate specific functionalities, rename your movie files like so:
 
-    "Example Title {ade-1234567}": Direct search using an ADE specific ID.
-    "Example Title {tmdb-123456}": Skip automatic metadata fetching for later manual 
-    assignment or handling via TMDB-based agents.
-    "Example Title {imdb-tt1234567}": Skip processing for potential manual matching 
-    with IMDB identifiers.
+Examples of proper naming for the agent is in the Plex style, 
+    
+    Title (Year). 
+
+    The Cat's Meow (2010).mp4
+    Batman VS Superman (2023).mp4
+    Spider-Man XXX 2: An Axel Braun Parody (2014).mp4
+    
+    If using these triggers:
+    
+    Title (Year) {tag}
+   
+    The Cat's Meow (2010) {ade-1528431}.mp4
+    Batman VS Superman (2023) {tmdb-1203062}.mp4
+    Spider-Man XXX 2: An Axel Braun Parody (2014) {imdb-tt3798010}.mp4
+
 
 This metadata agent provides flexible options for handling metadata, either by direct 
 fetching from Adult DVD Empire or by deferring to specialized agents, ensuring your 
