@@ -18,10 +18,22 @@ Before deploying the agent, make sure to adjust the Preferences within Plex to f
 
 Usage
 
-The agent automatically triggers searches and updates metadata when movies are added to your Plex library. The agent expects movies to be named in proper Plex movie format i.e. Title (Year).ext.  The agent behavior can be adjusted by adding specific tags to movie titles:
+The agent automatically triggers searches and updates metadata when movies are added to your Plex 
+library. The agent expects movies to be named in proper Plex movie format i.e. Title (Year).ext.  
+The agent behavior can be adjusted by adding specific tags to movie titles:
 
-    {ade-1234567}: Directly queries Adult DVD Empire using a specific ID provided in the tag.
-    {tmdb-123456} and {imdb-tt1234567}: These tags prevent the agent from performing any searches or updates, allowing manual matching or deferment to other agents specifically designed for TMDB or IMDB, respectively. This is useful for titles where more accurate or specific metadata is needed that the primary agent may not handle well.
+{ade-1234567}: Directly queries Adult DVD Empire using a specific ID provided in the tag.
+{tmdb-123456} and {imdb-tt1234567}: These tags prevent the agent from performing any searches 
+or updates, allowing manual matching or deferment to other agents specifically designed for TMDB 
+or IMDB, respectively. This is useful for titles where more accurate or specific metadata is needed 
+that the primary agent may not handle well.
+
+Examples of proper naming for the agent is in the Plex style, Title (Year).  
+If using these triggers:
+Title (Year) {tag}
+The Cat's Meow (2010) {ade-1528431}
+Batman VS Superman (2023) {tmdb-1203062}
+Spider-Man XXX 2: An Axel Braun Parody (2014) {imdb-tt3798010}
 
 Installation
 
@@ -32,17 +44,23 @@ Installation
 
 Modifications
 
-Please ensure any modifications to the code maintain compatibility with Python 2.7 and do not introduce features that are unsupported in the restricted Plex plugin environment. This ensures stability and compatibility across different server setups.
+Please ensure any modifications to the code maintain compatibility with Python 2.7 
+and do not introduce features that are unsupported in the restricted Plex plugin environment. 
+This ensures stability and compatibility across different server setups.
 
 Example
 
 To activate specific functionalities, rename your movie file or directory like so:
 
     "Example Title {ade-1234567}": Direct search using an ADE specific ID.
-    "Example Title {tmdb-123456}": Skip automatic metadata fetching for later manual assignment or handling via TMDB-based agents.
-    "Example Title {imdb-tt1234567}": Skip processing for potential manual matching with IMDB identifiers.
+    "Example Title {tmdb-123456}": Skip automatic metadata fetching for later manual 
+    assignment or handling via TMDB-based agents.
+    "Example Title {imdb-tt1234567}": Skip processing for potential manual matching 
+    with IMDB identifiers.
 
-This metadata agent provides flexible options for handling metadata, either by direct fetching from Adult DVD Empire or by deferring to specialized agents, ensuring your library remains up-to-date and accurately represented.
+This metadata agent provides flexible options for handling metadata, either by direct 
+fetching from Adult DVD Empire or by deferring to specialized agents, ensuring your 
+library remains up-to-date and accurately represented.
 
 Troubleshooting
 
@@ -55,13 +73,15 @@ Troubleshooting
 
 Logging
 
-    To view detailed logs for troubleshooting, ensure debug logging is enabled in the Plex server settings and review the logs typically located at:
+    To view detailed logs for troubleshooting, ensure debug logging is enabled in the 
+    Plex server settings and review the logs typically located at:
         Windows: C:\Users\[Your Username]\AppData\Local\Plex Media Server\Logs
         macOS and Linux: ~/Library/Logs/Plex Media Server/
 
 Contributions
 
-Contributions to improve the agent or address bugs are welcome via GitHub pull requests.  The discussion board is active and you can notify if things are not working.
+Contributions to improve the agent or address bugs are welcome via GitHub pull requests.  
+The discussion board is active and you can notify if things are not working.
 
 Thank You
 
