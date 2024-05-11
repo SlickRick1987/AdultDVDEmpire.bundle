@@ -80,7 +80,7 @@ class ADEAgent(Agent.Movies):
             pass
 
         # Consolidated Regex for special tags and title/year extraction
-        special_tag_pattern = r'{(tmdb-\d+|imdb-tt\d+|ade-(\d+))}'
+        special_tag_pattern = r'{(tmdb-\d+|imdb-\d+|ade-(\d+))}'
         title_year_pattern = r'[^\\]*\\([^\\]+) \((\d{4})\)(?: - ?(?:cd|disc|disk|dvd|part|pt)\d+)?(?: \{[^}]*\})?\.([^.]+)$'
         title, year, special_id = None, None, None  # Initialize 'title' and 'year' here
 
