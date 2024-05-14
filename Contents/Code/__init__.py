@@ -33,6 +33,7 @@ def LogDebug(message):
 
 LogDebug('Agent debug logging is enabled!' if DEBUG else 'Agent debug logging is disabled!')
 studioascollection = preference['studioascollection']
+useproductiondate = preference['useproductiondate']
 searchtype = preference['searchtype'] if preference['searchtype'] != 'all' else 'allsearch'
 LogDebug('Search Type: {0}'.format(searchtype))
 
@@ -66,8 +67,17 @@ class ADEAgent(Agent.Movies):
         LogDebug('Received filename: {0}'.format(media.filename))
 
         # Decoding the filename to work with it
-        decoded_filename = urllib2.unquote(media.filename)  # Ensure this is done before any usage
-        LogDebug('Decoded filename: {0}'.format(decoded_filename))
+        decoded_filename = None
+        if media.filename:
+            decoded_filename = urllib2.unquote(media.filename)
+            LogDebug('Decoded filename: {0}'.format(decoded_filename))
+        else:
+            LogDebug('No filename provided for media: {0}'.format(media.name)) # Log a message indicating that no filename was provided
+
+        # Consolidated Regex for special tags and title/year extraction
+        special_tag_pattern = r'{(tmdb-|imdb-|ade-(\d+))}'
+        title_year_pattern = r'[^\\]*\\([^\\]+) \((\d{4})\)(?: - ?(?:cd|disc|disk|dvd|part|pt)\d+)?(?: \{[^}]*\})?\.([^.]+)$'
+        title, year, special_id = None, None, None  # Initialize 'title' and 'year' here
 
         # Check if this might be a manual search by comparing media.name and media.title
         if media.name and media.name != media.title:
@@ -76,29 +86,24 @@ class ADEAgent(Agent.Movies):
             LogDebug('Manual search detected, using media.name: {0}' .format(search_query))
         else:
             # Automatic or no specific search handling
-            # Proceed with operations on decoded_filename or handle other scenarios
-            pass
-
-        # Consolidated Regex for special tags and title/year extraction
-        special_tag_pattern = r'{(tmdb-\d+|imdb-\d+|ade-(\d+))}'
-        title_year_pattern = r'[^\\]*\\([^\\]+) \((\d{4})\)(?: - ?(?:cd|disc|disk|dvd|part|pt)\d+)?(?: \{[^}]*\})?\.([^.]+)$'
-        title, year, special_id = None, None, None  # Initialize 'title' and 'year' here
-
-        # Searching for special tags
-        special_tags = re.findall(special_tag_pattern, decoded_filename)
-        special_id = None
-
-        for tag in special_tags:
-            LogDebug('Found special tag: {0}'.format(tag[0]))  # Using index 0 if tag is a tuple
-            if 'tmdb' in tag[0] or 'imdb' in tag[0]:
-                LogDebug('TMDB or IMDB tag found, skipping search.')
-                return
-            elif 'ade-' in tag[0]:
-                # Extract just the numeric part after 'ade-'
-                ade_id_match = re.search(r'ade-(\d+)', tag[0])
-                if ade_id_match:
-                    special_id = ade_id_match.group(1)
-                    LogDebug('Special ADE ID found: {0}'.format(special_id))
+            if decoded_filename is not None:  # Check if decoded_filename is not None before proceeding
+                special_tags = re.findall(special_tag_pattern, decoded_filename)
+                LogDebug('Special Tag found')
+            
+                for tag in special_tags:
+                    LogDebug('Found special tag: {0}'.format(tag[0]))  # Using index 0 if tag is a tuple
+                    if 'tmdb' in tag[0] or 'imdb' in tag[0]:
+                        LogDebug('TMDB or IMDB tag found, skipping search.')
+                        return
+                    elif 'ade-' in tag[0]:
+                        # Extract just the numeric part after 'ade-'
+                        ade_id_match = re.search(r'ade-(\d+)', tag[0])
+                        if ade_id_match:
+                            special_id = ade_id_match.group(1)
+                            LogDebug('Special ADE ID found: {0}'.format(special_id))
+            else:
+                search_query = media.name
+                LogDebug('No decoded filename available for media: {0}'.format(media.name))
 
         # Attempt to extract title and year from filename
         match = re.search(title_year_pattern, decoded_filename)
@@ -163,19 +168,45 @@ class ADEAgent(Agent.Movies):
                 movie_format = 'DVD' if dvd_elements else 'VOD'
                 LogDebug('Movie format: {0}'.format(movie_format))
                 
-                # Extract year
-                year_element = movie.xpath('.//small[contains(text(),"released")]/following-sibling::text()')
-                cur_year = 9999  # Default year if not found
-                if year_element:
-                    year_element_text = year_element[0].strip()
-                    year_match = re.search(r'\d{2}/\d{2}/(\d{4})', year_element_text)
-                    if year_match:
-                        cur_year = int(year_match.group(1))
-                        LogDebug('Movie year found: {0}'.format(cur_year))
+                # Extract production year
+                production_year_element = movie.xpath('.//a[contains(@aria-label, "View")]/following-sibling::text()[1]')
+                production_year = None
+                if production_year_element:
+                    production_year_text = production_year_element[0].strip()
+                    production_year_match = re.search(r'\d{4}', production_year_text)
+                    if production_year_match:
+                        production_year = int(production_year_match.group())
+                        LogDebug('Production year found: {0}'.format(production_year))
                     else:
-                        LogDebug('No year match found for text: {0}'.format(year_element_text))
+                        LogDebug('No production year match found for text: {0}'.format(production_year_text))
                 else:
-                    LogDebug('Year element not found for movie: {0}'.format(movie_title))                
+                    LogDebug('Production year element not found for movie: {0}'.format(movie_title))
+
+                # Extract release year
+                release_year_element = movie.xpath('.//small[contains(text(),"released")]/following-sibling::text()')
+                release_year = None
+                if release_year_element:
+                    release_year_text = release_year_element[0].strip()
+                    release_year_match = re.search(r'\d{4}', release_year_text)
+                    if release_year_match:
+                        release_year = int(release_year_match.group())
+                        LogDebug('Release year found: {0}'.format(release_year))
+                    else:
+                        LogDebug('No release year match found for text: {0}'.format(release_year_text))
+                else:
+                    LogDebug('Release year element not found for movie: {0}'.format(movie_title))
+
+                # Check preference to use production year if it's less than release year
+                if useproductiondate and production_year is not None and release_year is not None:
+                    if production_year < release_year:
+                        cur_year = production_year
+                        LogDebug('Using production year: {0}'.format(cur_year))
+                    else:
+                        cur_year = release_year
+                        LogDebug('Using release year: {0}'.format(cur_year))
+                else:
+                    cur_year = release_year if release_year is not None else production_year
+                    LogDebug('Using default year: {0}'.format(cur_year))               
 
                 score = INITIAL_SCORE - Util.LevenshteinDistance(title.lower(), movie_title.lower())
                 LogDebug('Raw Score for movie: {0}'.format (score))
